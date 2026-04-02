@@ -54,10 +54,9 @@ body{
   grid-template-columns: 1fr 1fr;
   border:1.5px solid var(--border2);
   border-radius:var(--radius);
+  overflow:hidden;
   margin-bottom:1.25rem;
   background: var(--bg2);
-  position:relative;
-  overflow:visible;
 }
 .auth-tab{
   padding:14px 10px;
@@ -71,17 +70,6 @@ body{
   -webkit-appearance:none;
   appearance:none;
   touch-action: manipulation;
-  position:relative;
-  z-index:1;
-  -webkit-user-select:none;
-  user-select:none;
-  cursor:pointer;
-}
-.auth-tab:first-child{
-  border-radius:calc(var(--radius) - 1px) 0 0 calc(var(--radius) - 1px);
-}
-.auth-tab:last-child{
-  border-radius:0 calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0;
 }
 .auth-tab.ativo{
   background:var(--text);
@@ -235,27 +223,21 @@ body{
 .cat-hint{font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5}
 </style>
 </head>
-<body ontouchstart="">
+<body>
 
 <div id="auth-screen">
   <div class="auth-box">
     <div class="auth-logo"><h1>💰 Finanças</h1><p>Controle financeiro pessoal</p></div>
     <div class="auth-tabs">
-      <a class="auth-tab ativo" id="tab-login" href="javascript:void(0)" onclick="switchTab('login');return false">Entrar</a>
-      <a class="auth-tab" id="tab-cadastro" href="javascript:void(0)" onclick="switchTab('cadastro');return false">Cadastrar</a>
+      <button class="auth-tab ativo" id="tab-login" type="button" onclick="switchTab('login')">Entrar</button>
+      <button class="auth-tab" id="tab-cadastro" type="button" onclick="switchTab('cadastro')">Cadastrar</button>
     </div>
     <div class="auth-msg" id="auth-msg"></div>
     <div id="form-login">
       <div class="field"><label for="l-email">E-mail</label><input type="email" id="l-email" placeholder="seu@email.com" autocomplete="email" inputmode="email"></div>
       <div class="field"><label for="l-senha">Senha</label><input type="password" id="l-senha" placeholder="••••••••" autocomplete="current-password"></div>
       <button type="button" class="btn-primary" onclick="fazerLogin()">Entrar</button>
-      <div style="text-align:center;margin-top:18px">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Não tem conta?</div>
-        <button type="button" onclick="switchTab('cadastro')" style="width:100%;padding:15px;background:transparent;border:2px solid var(--text);border-radius:var(--radius);font-size:16px;font-weight:700;color:var(--text);font-family:inherit;cursor:pointer;-webkit-appearance:none;touch-action:manipulation">Criar conta grátis</button>
-      </div>
-      <div style="text-align:center;margin-top:12px">
-        <button type="button" onclick="switchTab('reset')" style="background:none;border:none;font-size:13px;color:var(--text2);font-family:inherit;cursor:pointer;padding:8px;touch-action:manipulation">Esqueceu a senha? Recuperar</button>
-      </div>
+      <div class="auth-link" onclick="switchTab('reset')">Esqueceu a senha? <span>Recuperar</span></div>
     </div>
     <div id="form-cadastro" style="display:none">
       <div class="field"><label for="c-nome">Nome completo</label><input type="text" id="c-nome" placeholder="Seu nome" autocomplete="name"></div>
@@ -400,7 +382,7 @@ function showMsg(t,c){var m=document.getElementById("auth-msg");m.textContent=t;
 
 // CORREÇÃO IPHONE: Prevent default e scroll fix
 function switchTab(t){
-  alert("TESTE: aba="+t); // debug temporário
+  // 1. Manter a posição da tela para não subir sozinha
   var scrollY = window.pageYOffset || document.documentElement.scrollTop;
   
   ["login","cadastro","reset"].forEach(function(x){
