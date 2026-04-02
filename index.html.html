@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Finanças Pessoais</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --green:#00A86B;--green-bg:#D6F5E8;--green-text:#006B44;
+  --orange:#FF6B2B;--orange-bg:#FFF0E8;--orange-text:#B03A00;
+  --bg:#fff;--bg2:#f5f5f3;--bg3:#ececea;
+  --text:#1a1a1a;--text2:#666;--text3:#999;
+  --border:#e0e0dc;--border2:#ccc;
+  --radius:10px;--radius-lg:16px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1a1a1a;--bg2:#242424;--bg3:#2e2e2e;
+    --text:#f0f0f0;--text2:#aaa;--text3:#555;
+    --border:#333;--border2:#444;
+    --green:#00D68F;--green-bg:#003D2A;--green-text:#00D68F;
+    --orange:#FF8C4A;--orange-bg:#3D1A00;--orange-text:#FF8C4A;
+  }
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif;
+  background:var(--bg);color:var(--text);
+  -webkit-text-size-adjust:100%;text-size-adjust:100%;
+}
+
+/* ================================================================
+   AJUSTE DE ESTABILIDADE AUTH PARA IPHONE (iOS 18+)
+   ================================================================ */
+#auth-screen{
+  display:block; /* Mudado de flex para block para evitar pulos de tela */
+  background:var(--bg);
+  min-height:100vh;
+  padding:calc(env(safe-area-inset-top,0px) + 40px) 20px 100px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#auth-screen.hidden{display:none}
+.auth-box{width:100%;max-width:360px;margin:0 auto}
+.auth-logo{text-align:center;margin-bottom:1.75rem}
+.auth-logo h1{font-size:26px;font-weight:700;color:var(--text)}
+.auth-logo p{font-size:14px;color:var(--text2);margin-top:4px}
+
+/* Abas estilo botão nativo para evitar hit-target bug */
+.auth-tabs{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  border:1.5px solid var(--border2);
+  border-radius:var(--radius);
+  margin-bottom:1.25rem;
+  background: var(--bg2);
+  position:relative;
+  overflow:visible;
+}
+.auth-tab{
+  padding:14px 10px;
+  font-size:15px;
+  font-weight:600;
+  border:none;
+  cursor:pointer;
+  background:transparent;
+  color:var(--text2);
+  font-family:inherit;
+  -webkit-appearance:none;
+  appearance:none;
+  touch-action: manipulation;
+  position:relative;
+  z-index:1;
+  -webkit-user-select:none;
+  user-select:none;
+  cursor:pointer;
+}
+.auth-tab:first-child{
+  border-radius:calc(var(--radius) - 1px) 0 0 calc(var(--radius) - 1px);
+}
+.auth-tab:last-child{
+  border-radius:0 calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0;
+}
+.auth-tab.ativo{
+  background:var(--text);
+  color:var(--bg);
+}
+
+.auth-msg{font-size:13px;padding:11px 13px;border-radius:var(--radius);margin-bottom:14px;display:none;line-height:1.5}
+.auth-msg.ok{background:var(--green-bg);color:var(--green-text);display:block}
+.auth-msg.err{background:var(--orange-bg);color:var(--orange-text);display:block}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px}
+.field input{
+  font-size:16px; /* 16px é obrigatório no iOS para não dar zoom */
+  width:100%;
+  padding:13px 14px;
+  border:1.5px solid var(--border2);
+  border-radius:var(--radius);
+  background:var(--bg);
+  color:var(--text);
+  font-family:inherit;
+  outline:none;
+  -webkit-appearance:none;
+}
+.field input:focus{border-color:var(--green)}
+
+.btn-primary{
+  display:block;
+  width:100%;
+  padding:16px;
+  border:none;
+  border-radius:var(--radius);
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  background:var(--text);
+  color:var(--bg);
+  font-family:inherit;
+  -webkit-appearance:none;
+  touch-action:manipulation;
+  margin-top:10px;
+}
+.btn-primary:active{opacity:.7}
+
+/* ================================================================
+   ESTILOS DO APP (ORIGINAIS MANTIDOS)
+   ================================================================ */
+#app{display:none;max-width:440px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 48px)}
+.topbar{display:flex;align-items:center;gap:12px;margin-bottom:.5rem}
+.hamburger{background:none;border:1.5px solid var(--border2);border-radius:var(--radius);width:40px;height:40px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;flex-shrink:0;-webkit-appearance:none;appearance:none;touch-action:manipulation}
+.hamburger span{display:block;width:17px;height:2px;background:var(--text);border-radius:2px}
+.user-center{text-align:center;margin-bottom:1.25rem}
+.avatar-big{width:52px;height:52px;border-radius:50%;background:#E6F1FB;border:2px solid #B5D4F4;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#185FA5;margin:0 auto 8px}
+.user-name{font-size:16px;font-weight:600;color:var(--text)}
+.user-email-lbl{font-size:12px;color:var(--text2);margin-top:2px}
+.mes-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.mes-nav button{background:none;border:1.5px solid var(--border2);border-radius:var(--radius);padding:7px 16px;cursor:pointer;font-size:14px;color:var(--text);font-family:inherit;-webkit-appearance:none;appearance:none;touch-action:manipulation}
+.mes-nav span{font-size:15px;font-weight:600;color:var(--text)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.card{background:var(--bg2);border-radius:var(--radius);padding:14px 16px;cursor:pointer;touch-action:manipulation}
+.card:active{opacity:.8}
+.card .lbl{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.card .val{font-size:19px;font-weight:700}
+.card.receita .val{color:var(--green-text)}
+.card.receita{border:1.5px solid rgba(0,168,107,.2)}
+.card.gasto{background:var(--orange-bg);border:1.5px solid rgba(255,107,43,.25)}
+.card.gasto .lbl{color:var(--orange-text)}
+.card.gasto .val{color:var(--orange-text)}
+.btn-nova-receita{display:inline-flex;align-items:center;gap:3px;margin-top:6px;padding:4px 9px;font-size:11px;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:var(--green-bg);color:var(--green-text);font-family:inherit;-webkit-appearance:none;appearance:none;touch-action:manipulation}
+.card-saldo{background:var(--bg2);border-radius:var(--radius);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-top:10px;margin-bottom:1.25rem;border:1.5px solid var(--border)}
+.card-saldo .lbl{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.card-saldo .val{font-size:20px;font-weight:700}
+.btn-add{width:100%;padding:15px;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;margin-bottom:1.25rem;font-family:inherit;-webkit-appearance:none;appearance:none;touch-action:manipulation}
+.btn-add:active{opacity:.7}
+.section-title{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.07em}
+.pizza-section{background:var(--bg2);border-radius:var(--radius);padding:16px;margin-bottom:1.25rem;border:1.5px solid var(--border)}
+.pizza-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.pizza-canvas-wrap{flex-shrink:0}
+.pizza-legend{flex:1;min-width:110px}
+.pizza-leg-item{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.pizza-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.pizza-leg-name{flex:1;font-size:11px;color:var(--text2);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pizza-leg-pct{font-size:12px;font-weight:700;color:var(--text)}
+.lista{display:flex;flex-direction:column;gap:8px;margin-bottom:1.5rem}
+.item{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);padding:11px 12px;display:flex;align-items:center;gap:9px}
+.item .icon{width:36px;height:36px;border-radius:50%;background:var(--orange-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.item .icon.ri{background:var(--green-bg)}
+.item .info{flex:1;min-width:0}
+.item .desc{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .cat{font-size:11px;color:var(--text2);margin-top:2px}
+.item .quantia{font-size:14px;font-weight:700;flex-shrink:0}
+.item .quantia.gq{color:var(--orange-text)}
+.item .quantia.rq{color:var(--green-text)}
+.item-actions{display:flex;flex-shrink:0}
+.item .ebtn,.item .del{background:none;border:none;cursor:pointer;padding:6px 5px;-webkit-appearance:none;appearance:none;border-radius:6px;font-size:15px;line-height:1;color:var(--text2);touch-action:manipulation;min-width:34px;min-height:34px;display:flex;align-items:center;justify-content:center}
+.item .del{color:var(--text3)}
+.item .ebtn:active{background:var(--bg2)}
+.item .del:active{color:var(--orange-text)}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--text2);font-size:14px;line-height:1.7}
+.drawer-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:200;display:none}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:280px;background:var(--bg);border-right:1px solid var(--border);z-index:201;transform:translateX(-100%);transition:transform .24s ease;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom,0px)}
+.drawer.open{transform:translateX(0)}
+.drawer-hdr{padding:calc(env(safe-area-inset-top,0px) + 20px) 1rem 1.25rem;border-bottom:1px solid var(--border)}
+.drawer-hdr h2{font-size:15px;font-weight:600;color:var(--text);margin-bottom:12px}
+.user-block{display:flex;align-items:center;gap:10px}
+.avatar-sm{width:40px;height:40px;border-radius:50%;background:#E6F1FB;border:2px solid #B5D4F4;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#185FA5;flex-shrink:0}
+.uinfo p{font-size:13px;font-weight:600;color:var(--text)}
+.uinfo span{font-size:11px;color:var(--text2)}
+.drawer-stats{padding:1rem;border-bottom:1px solid var(--border)}
+.slbl{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.sval{font-size:22px;font-weight:700;color:var(--orange-text)}
+.ssub{font-size:12px;color:var(--text2);margin-top:2px}
+.drawer-chart{padding:1rem;border-bottom:1px solid var(--border)}
+.ctitle{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.bar-cat{font-size:11px;color:var(--text2);width:70px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-wrap{flex:1;height:6px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:var(--orange)}
+.bar-val{font-size:10px;color:var(--text2);width:48px;text-align:right;flex-shrink:0}
+.drawer-nav{padding:.75rem .5rem;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:var(--radius);cursor:pointer;font-size:14px;color:var(--text2);margin-bottom:2px;touch-action:manipulation}
+.nav-item:active{background:var(--bg2);color:var(--text)}
+.nav-item.danger{color:var(--orange-text)}
+.nav-item.danger:active{background:var(--orange-bg)}
+.nav-icon{font-size:15px;width:20px;text-align:center}
+.drawer-footer{padding:1rem;border-top:1px solid var(--border);font-size:11px;color:var(--text3)}
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;z-index:300}
+.modal{background:var(--bg);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:1.5rem;padding-bottom:calc(1.5rem + env(safe-area-inset-bottom,0px));width:100%;max-width:480px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.modal h2{font-size:17px;font-weight:700;margin-bottom:1.25rem;color:var(--text)}
+.tipos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.tipo-btn{padding:11px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:14px;cursor:pointer;background:var(--bg);color:var(--text2);font-family:inherit;-webkit-appearance:none;appearance:none;font-weight:500;touch-action:manipulation}
+.tipo-btn.ativo-gasto{background:var(--orange-bg);border-color:var(--orange);color:var(--orange-text);font-weight:700}
+.tipo-btn.ativo-receita{background:var(--green-bg);border-color:var(--green);color:var(--green-text);font-weight:700}
+.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.btn-cancel{padding:13px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:14px;cursor:pointer;background:var(--bg);color:var(--text);font-family:inherit;-webkit-appearance:none;appearance:none;font-weight:500;touch-action:manipulation}
+.btn-save{padding:13px;border:none;border-radius:var(--radius);font-size:14px;cursor:pointer;background:var(--text);color:var(--bg);font-weight:700;font-family:inherit;-webkit-appearance:none;appearance:none;touch-action:manipulation}
+.select-wrap{position:relative}
+.select-wrap::after{content:"▾";position:absolute;right:13px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text2);font-size:13px}
+.select-wrap select{padding-right:32px}
+.cat-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:240px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.cat-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg2);border-radius:8px;border:1.5px solid var(--border)}
+.cat-emoji{font-size:18px;width:26px;text-align:center;flex-shrink:0}
+.cat-name{flex:1;font-size:14px;font-weight:500;color:var(--text)}
+.cat-ebtn,.cat-dbtn{background:none;border:none;cursor:pointer;font-size:15px;padding:5px 6px;-webkit-appearance:none;appearance:none;border-radius:6px;color:var(--text2);touch-action:manipulation;min-width:32px;min-height:32px;display:flex;align-items:center;justify-content:center}
+.cat-dbtn{color:var(--text3)}
+.cat-add-row{display:flex;gap:7px;margin-top:2px}
+.cat-add-row input{flex:1;padding:12px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:16px;background:var(--bg);color:var(--text);font-family:inherit;outline:none;-webkit-appearance:none;appearance:none}
+.cat-add-row input:focus{border-color:var(--green)}
+.emoji-input{width:54px!important;flex:none!important;text-align:center;font-size:20px!important;padding:12px 4px!important}
+.btn-cat-add{padding:12px 15px;border:none;border-radius:var(--radius);background:var(--green);color:#fff;font-size:15px;font-weight:700;cursor:pointer;-webkit-appearance:none;appearance:none;font-family:inherit;flex-shrink:0;touch-action:manipulation}
+.cat-hint{font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5}
+</style>
+</head>
+<body ontouchstart="">
+
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo"><h1>💰 Finanças</h1><p>Controle financeiro pessoal</p></div>
+    <div class="auth-tabs">
+      <a class="auth-tab ativo" id="tab-login" href="javascript:void(0)" onclick="switchTab('login');return false">Entrar</a>
+      <a class="auth-tab" id="tab-cadastro" href="javascript:void(0)" onclick="switchTab('cadastro');return false">Cadastrar</a>
+    </div>
+    <div class="auth-msg" id="auth-msg"></div>
+    <div id="form-login">
+      <div class="field"><label for="l-email">E-mail</label><input type="email" id="l-email" placeholder="seu@email.com" autocomplete="email" inputmode="email"></div>
+      <div class="field"><label for="l-senha">Senha</label><input type="password" id="l-senha" placeholder="••••••••" autocomplete="current-password"></div>
+      <button type="button" class="btn-primary" onclick="fazerLogin()">Entrar</button>
+      <div style="text-align:center;margin-top:18px">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Não tem conta?</div>
+        <button type="button" onclick="switchTab('cadastro')" style="width:100%;padding:15px;background:transparent;border:2px solid var(--text);border-radius:var(--radius);font-size:16px;font-weight:700;color:var(--text);font-family:inherit;cursor:pointer;-webkit-appearance:none;touch-action:manipulation">Criar conta grátis</button>
+      </div>
+      <div style="text-align:center;margin-top:12px">
+        <button type="button" onclick="switchTab('reset')" style="background:none;border:none;font-size:13px;color:var(--text2);font-family:inherit;cursor:pointer;padding:8px;touch-action:manipulation">Esqueceu a senha? Recuperar</button>
+      </div>
+    </div>
+    <div id="form-cadastro" style="display:none">
+      <div class="field"><label for="c-nome">Nome completo</label><input type="text" id="c-nome" placeholder="Seu nome" autocomplete="name"></div>
+      <div class="field"><label for="c-email">E-mail</label><input type="email" id="c-email" placeholder="seu@email.com" autocomplete="email" inputmode="email"></div>
+      <div class="field"><label for="c-senha">Senha (mín. 6 caracteres)</label><input type="password" id="c-senha" placeholder="••••••••" autocomplete="new-password"></div>
+      <button type="button" class="btn-primary" id="btn-cadastrar" onclick="fazerCadastro()">Criar conta</button>
+    </div>
+    <div id="form-reset" style="display:none">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6">Informe seu e-mail para recuperar a senha.</p>
+      <div class="field"><label for="r-email">E-mail</label><input type="email" id="r-email" placeholder="seu@email.com" autocomplete="email" inputmode="email"></div>
+      <button type="button" class="btn-primary" onclick="fazerReset()">Recuperar senha</button>
+      <div class="auth-link" onclick="switchTab('login')">← <span>Voltar ao login</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <button type="button" class="hamburger" onclick="toggleDrawer()"><span></span><span></span><span></span></button>
+    <div style="flex:1"></div><div style="width:40px"></div>
+  </div>
+  <div class="user-center">
+    <div class="avatar-big" id="avatar-big">?</div>
+    <div class="user-name" id="user-name-top">Usuário</div>
+    <div class="user-email-lbl" id="user-email-top"></div>
+  </div>
+  <div class="mes-nav">
+    <button type="button" onclick="mudarMes(-1)">‹ Anterior</button>
+    <span id="mes-label"></span>
+    <button type="button" onclick="mudarMes(1)">Próximo ›</button>
+  </div>
+  <div class="cards">
+    <div class="card receita" onclick="abrirModal('receita')">
+      <div class="lbl">Receita total</div>
+      <div class="val" id="total-receita">R$ 0,00</div>
+      <button type="button" class="btn-nova-receita" onclick="event.stopPropagation();abrirModal('receita')">+ Nova receita</button>
+    </div>
+    <div class="card gasto" onclick="abrirModal('gasto')">
+      <div class="lbl">Gasto total</div>
+      <div class="val" id="total-gasto">R$ 0,00</div>
+    </div>
+  </div>
+  <div class="card-saldo">
+    <div class="lbl">Saldo do mês</div>
+    <div class="val" id="saldo">R$ 0,00</div>
+  </div>
+  <button type="button" class="btn-add" onclick="abrirModal('gasto')">+ Novo gasto</button>
+  <div class="pizza-section" id="pizza-section" style="display:none">
+    <div class="section-title" style="margin-bottom:14px">Gastos por categoria</div>
+    <div class="pizza-wrap">
+      <div class="pizza-canvas-wrap"><canvas id="pizza-canvas" width="110" height="110"></canvas></div>
+      <div class="pizza-legend" id="pizza-legend"></div>
+    </div>
+  </div>
+  <div class="section-title">Histórico</div>
+  <div class="lista" id="lista"></div>
+</div>
+
+<div class="drawer-overlay" id="drawer-overlay" onclick="fecharDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-hdr">
+    <h2>Menu</h2>
+    <div class="user-block">
+      <div class="avatar-sm" id="drawer-avatar">?</div>
+      <div class="uinfo"><p id="drawer-nome">Usuário</p><span id="drawer-email"></span></div>
+    </div>
+  </div>
+  <div class="drawer-stats">
+    <div class="slbl">Total gasto no ano</div>
+    <div class="sval" id="gasto-ano">R$ 0,00</div>
+    <div class="ssub" id="gasto-ano-sub">em 0 lançamentos</div>
+  </div>
+  <div class="drawer-chart">
+    <div class="ctitle">Gastos por categoria — mês atual</div>
+    <div id="chart-barras"></div>
+  </div>
+  <div class="drawer-nav">
+    <div class="nav-item" onclick="fecharDrawer();abrirModal('gasto')"><span class="nav-icon">➕</span> Novo gasto</div>
+    <div class="nav-item" onclick="fecharDrawer();abrirModal('receita')"><span class="nav-icon">💰</span> Nova receita</div>
+    <div class="nav-item" onclick="fecharDrawer();abrirModalCats()"><span class="nav-icon">🏷️</span> Gerenciar categorias</div>
+    <div class="nav-item" onclick="fecharDrawer();exportar()"><span class="nav-icon">📤</span> Exportar dados</div>
+    <div class="nav-item" onclick="fecharDrawer();limparMes()"><span class="nav-icon">🗑️</span> Limpar mês</div>
+    <div class="nav-item danger" onclick="fecharDrawer();sair()"><span class="nav-icon">🚪</span> Sair</div>
+  </div>
+  <div class="drawer-footer">Dados salvos localmente no dispositivo</div>
+</div>
+
+<div class="overlay" id="modal" style="display:none" onclick="if(event.target===this)fecharModal()">
+  <div class="modal">
+    <h2 id="modal-title">Novo gasto</h2>
+    <div class="tipos">
+      <button type="button" class="tipo-btn" id="btn-gasto" onclick="setTipo('gasto')">Gasto</button>
+      <button type="button" class="tipo-btn" id="btn-receita" onclick="setTipo('receita')">Receita</button>
+    </div>
+    <div class="field"><label>Descrição</label><input type="text" id="f-desc" placeholder="Ex: Almoço, Salário..." autocorrect="off" spellcheck="false"></div>
+    <div class="field"><label>Valor (R$)</label><input type="text" inputmode="decimal" id="f-valor" placeholder="0,00"></div>
+    <div class="field"><label>Categoria</label><div class="select-wrap"><select id="f-cat"></select></div></div>
+    <div class="field"><label>Data</label><input type="date" id="f-data"></div>
+    <div class="modal-btns">
+      <button type="button" class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+      <button type="button" class="btn-save" onclick="salvar()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-cats" style="display:none" onclick="if(event.target===this)fecharModalCats()">
+  <div class="modal">
+    <h2>🏷️ Categorias</h2>
+    <p class="cat-hint">Toque ✏️ para editar, × para excluir. Lançamentos são migrados automaticamente.</p>
+    <div class="cat-list" id="cat-list"></div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600">Adicionar / editar:</p>
+    <div class="cat-add-row">
+      <input class="emoji-input" type="text" id="new-cat-emoji" placeholder="🏷️" maxlength="2" autocorrect="off">
+      <input type="text" id="new-cat-nome" placeholder="Nome da categoria" autocorrect="off" spellcheck="false">
+      <button type="button" class="btn-cat-add" onclick="adicionarCat()">+</button>
+    </div>
+    <div style="margin-top:14px">
+      <button type="button" class="btn-cancel" onclick="fecharModalCats()" style="width:100%">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+var CORES=["#FF6B2B","#00A86B","#3B82F6","#F59E0B","#8B5CF6","#EC4899","#14B8A6","#EF4444","#84CC16","#06B6D4"];
+var CATS_DEFAULT={"Alimentação":"🍽️","Transporte":"🚗","Moradia":"🏠","Saúde":"❤️","Lazer":"🎉","Salário / Renda":"💰","Outros":"📦"};
+var tipo="gasto",mesAtual=new Date().getMonth(),anoAtual=new Date().getFullYear();
+var currentUser=null,editIdx=-1,editCatNome=null;
+
+function getCats(){try{var c=localStorage.getItem("fin_cats");if(c)return JSON.parse(c)}catch(e){}return JSON.parse(JSON.stringify(CATS_DEFAULT))}
+function saveCats(c){localStorage.setItem("fin_cats",JSON.stringify(c))}
+function getCatEmoji(n){var c=getCats();return c[n]||"📦"}
+function getUsers(){try{var u=localStorage.getItem("fin_users");return u?JSON.parse(u):{}}catch(e){return{}}}
+function saveUsers(u){localStorage.setItem("fin_users",JSON.stringify(u))}
+function getKey(m,a){var em=currentUser?currentUser.email:"_";return"fin_"+em+"_"+((a!=null)?a:anoAtual)+"_"+((m!=null)?m:mesAtual)}
+function getLancamentos(m,a){try{var d=localStorage.getItem(getKey(m,a));return d?JSON.parse(d):[]}catch(e){return[]}}
+function salvarStorage(d){localStorage.setItem(getKey(),JSON.stringify(d))}
+function fmt(v){return"R$ "+Number(v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtData(d){if(!d)return"";var p=d.split("-");return p[2]+"/"+p[1]}
+function getInitials(n){var p=(n||"").split(" ").filter(function(x){return x.length>0});if(!p.length)return"?";return p.slice(0,2).map(function(x){return x[0]}).join("").toUpperCase()}
+function showMsg(t,c){var m=document.getElementById("auth-msg");m.textContent=t;m.className="auth-msg "+(c||"ok")}
+
+// CORREÇÃO IPHONE: Prevent default e scroll fix
+function switchTab(t){
+  alert("TESTE: aba="+t); // debug temporário
+  var scrollY = window.pageYOffset || document.documentElement.scrollTop;
+  
+  ["login","cadastro","reset"].forEach(function(x){
+    var f=document.getElementById("form-"+x);if(f)f.style.display=(x===t)?"block":"none";
+    var tb=document.getElementById("tab-"+x);if(tb)tb.className="auth-tab"+((x===t)?" ativo":"");
+  });
+  
+  var msg=document.getElementById("auth-msg");msg.className="auth-msg";msg.textContent="";
+  
+  // 2. Garante que o scroll não mude
+  window.scrollTo(0, scrollY);
+}
+
+function fazerCadastro(){
+  var nome=document.getElementById("c-nome").value.trim();
+  var email=document.getElementById("c-email").value.trim().toLowerCase();
+  var senha=document.getElementById("c-senha").value;
+  if(!nome){showMsg("Informe seu nome.","err");return}
+  if(!email||email.indexOf("@")<1){showMsg("E-mail inválido.","err");return}
+  if(senha.length<6){showMsg("Senha: mínimo 6 caracteres.","err");return}
+  var users=getUsers();
+  if(users[email]){showMsg("E-mail já cadastrado.","err");return}
+  var novo={nome:nome,email:email,senha:senha};
+  users[email]=novo;saveUsers(users);
+  currentUser=novo;localStorage.setItem("fin_session",JSON.stringify(currentUser));
+  showMsg("Conta criada! Entrando...","ok");
+  setTimeout(function(){entrarApp()},700);
+}
+
+function fazerLogin(){
+  var email=document.getElementById("l-email").value.trim().toLowerCase();
+  var senha=document.getElementById("l-senha").value;
+  if(!email||!senha){showMsg("Preencha e-mail e senha.","err");return}
+  var users=getUsers();
+  if(!users[email]||users[email].senha!==senha){showMsg("E-mail ou senha incorretos.","err");return}
+  currentUser=users[email];localStorage.setItem("fin_session",JSON.stringify(currentUser));entrarApp();
+}
+
+function fazerReset(){
+  var email=document.getElementById("r-email").value.trim().toLowerCase();
+  if(!email){showMsg("Informe seu e-mail.","err");return}
+  var users=getUsers();
+  if(!users[email]){showMsg("E-mail não encontrado.","err");return}
+  showMsg("Sua senha: "+users[email].senha,"ok");
+}
+
+function entrarApp(){
+  document.getElementById("auth-screen").classList.add("hidden");
+  document.getElementById("app").style.display="block";
+  var ini=getInitials(currentUser.nome);
+  ["avatar-big","drawer-avatar"].forEach(function(id){document.getElementById(id).textContent=ini});
+  document.getElementById("user-name-top").textContent=currentUser.nome;
+  document.getElementById("user-email-top").textContent=currentUser.email;
+  document.getElementById("drawer-nome").textContent=currentUser.nome;
+  document.getElementById("drawer-email").textContent=currentUser.email;
+  render();
+}
+
+function sair(){
+  if(!confirm("Deseja sair da conta?"))return;
+  localStorage.removeItem("fin_session");currentUser=null;
+  document.getElementById("app").style.display="none";
+  document.getElementById("auth-screen").classList.remove("hidden");
+  switchTab("login");
+}
+
+function toggleDrawer(){
+  var d=document.getElementById("drawer"),open=d.classList.contains("open");
+  if(open)fecharDrawer();
+  else{d.classList.add("open");document.getElementById("drawer-overlay").style.display="block";renderDrawer()}
+}
+function fecharDrawer(){document.getElementById("drawer").classList.remove("open");document.getElementById("drawer-overlay").style.display="none"}
+function renderDrawer(){
+  var tot=0,cnt=0;
+  for(var m2=0;m2<12;m2++)getLancamentos(m2,anoAtual).filter(function(x){return x.tipo==="gasto"}).forEach(function(x){tot+=x.valor;cnt++});
+  document.getElementById("gasto-ano").textContent=fmt(tot);
+  document.getElementById("gasto-ano-sub").textContent="em "+cnt+" lançamento"+(cnt!==1?"s":"");
+  var gastos=getLancamentos().filter(function(x){return x.tipo==="gasto"});
+  var pc={};gastos.forEach(function(x){pc[x.cat]=(pc[x.cat]||0)+x.valor});
+  var sorted=Object.entries(pc).sort(function(a,b){return b[1]-a[1]});
+  var max=sorted.length?sorted[0][1]:1;
+  var el=document.getElementById("chart-barras");
+  if(!sorted.length){el.innerHTML='<p style="font-size:12px;color:var(--text2)">Nenhum gasto lançado.</p>';return}
+  el.innerHTML=sorted.map(function(e){return'<div class="bar-row"><div class="bar-cat">'+getCatEmoji(e[0])+" "+e[0]+'</div><div class="bar-wrap"><div class="bar-fill" style="width:'+Math.round((e[1]/max)*100)+'%"></div></div><div class="bar-val">'+fmt(e[1]).replace("R$ ","")+'</div></div>'}).join("");
+}
+
+function renderPizza(){
+  var data=getLancamentos(),gastos=data.filter(function(x){return x.tipo==="gasto"});
+  var sec=document.getElementById("pizza-section");
+  if(!gastos.length){sec.style.display="none";return}
+  sec.style.display="block";
+  var pc={};gastos.forEach(function(x){pc[x.cat]=(pc[x.cat]||0)+x.valor});
+  var total=gastos.reduce(function(s,x){return s+x.valor},0);
+  var sorted=Object.entries(pc).sort(function(a,b){return b[1]-a[1]});
+  var cv=document.getElementById("pizza-canvas"),ctx=cv.getContext("2d");
+  var w=cv.width,h=cv.height,r=Math.min(w,h)/2-3;
+  ctx.clearRect(0,0,w,h);var start=-Math.PI/2;
+  sorted.forEach(function(e,i){
+    var sl=(e[1]/total)*2*Math.PI;
+    ctx.beginPath();ctx.moveTo(w/2,h/2);ctx.arc(w/2,h/2,r,start,start+sl);ctx.closePath();
+    ctx.fillStyle=CORES[i%CORES.length];ctx.fill();
+    ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue("--bg").trim()||"#fff";
+    ctx.lineWidth=2;ctx.stroke();start+=sl;
+  });
+  document.getElementById("pizza-legend").innerHTML=sorted.map(function(e,i){
+    var pct=Math.round((e[1]/total)*100);
+    return'<div class="pizza-leg-item"><div class="pizza-dot" style="background:'+CORES[i%CORES.length]+'"></div><div class="pizza-leg-name">'+getCatEmoji(e[0])+" "+e[0]+'</div><div class="pizza-leg-pct">'+pct+'%</div></div>';
+  }).join("");
+}
+
+function render(){
+  var data=getLancamentos();
+  var rec=data.filter(function(x){return x.tipo==="receita"}).reduce(function(s,x){return s+x.valor},0);
+  var gas=data.filter(function(x){return x.tipo==="gasto"}).reduce(function(s,x){return s+x.valor},0);
+  var sal=rec-gas;
+  document.getElementById("total-receita").textContent=fmt(rec);
+  document.getElementById("total-gasto").textContent=fmt(gas);
+  var se=document.getElementById("saldo");se.textContent=fmt(sal);
+  se.style.color=sal>=0?"var(--green-text)":"var(--orange-text)";
+  document.getElementById("mes-label").textContent=MESES[mesAtual]+" "+anoAtual;
+  renderPizza();
+  var lista=document.getElementById("lista");
+  if(!data.length){lista.innerHTML='<div class="empty">Nenhum lançamento neste mês.<br>Toque em <strong>+ Novo gasto</strong> para começar.</div>';return}
+  var sorted=[].concat(data).sort(function(a,b){var da=a.data||"",db=b.data||"";return da<db?1:da>db?-1:0});
+  lista.innerHTML=sorted.map(function(x){
+    var idx=data.indexOf(x),ig=x.tipo==="gasto";
+    return'<div class="item"><div class="icon'+(ig?"":" ri")+'">'+getCatEmoji(x.cat)+'</div><div class="info"><div class="desc">'+x.desc+'</div><div class="cat">'+x.cat+' · '+fmtData(x.data)+(ig?'':' · Receita')+'</div></div><div class="quantia '+(ig?"gq":"rq")+'">'+(ig?"-":"+")+fmt(x.valor)+'</div><div class="item-actions"><button type="button" class="ebtn" onclick="editarItem('+idx+')">✏️</button><button type="button" class="del" onclick="excluir('+idx+')">×</button></div></div>';
+  }).join("");
+}
+
+function mudarMes(dir){mesAtual+=dir;if(mesAtual>11){mesAtual=0;anoAtual++}if(mesAtual<0){mesAtual=11;anoAtual--}render();if(document.getElementById("drawer").classList.contains("open"))renderDrawer()}
+
+function populateCatSelect(t){
+  var sel=document.getElementById("f-cat"),cats=getCats();sel.innerHTML="";
+  Object.keys(cats).forEach(function(n){var o=document.createElement("option");o.value=n;o.textContent=cats[n]+" "+n;sel.appendChild(o)});
+  if(t==="receita"&&cats["Salário / Renda"])sel.value="Salário / Renda";else if(cats["Alimentação"])sel.value="Alimentação";
+}
+
+function abrirModal(t){editIdx=-1;var hoje=new Date().toISOString().split("T")[0];document.getElementById("f-data").value=hoje;document.getElementById("f-desc").value="";document.getElementById("f-valor").value="";setTipo(t||"gasto");document.getElementById("modal").style.display="flex"}
+function editarItem(idx){var data=getLancamentos(),x=data[idx];if(!x)return;editIdx=idx;document.getElementById("f-desc").value=x.desc;document.getElementById("f-valor").value=String(x.valor).replace(".",",");document.getElementById("f-data").value=x.data||"";setTipo(x.tipo);document.getElementById("f-cat").value=x.cat;document.getElementById("modal-title").textContent="Editar lançamento";document.getElementById("modal").style.display="flex"}
+function fecharModal(){document.getElementById("modal").style.display="none";editIdx=-1}
+function setTipo(t){tipo=t;if(editIdx<0)document.getElementById("modal-title").textContent=t==="gasto"?"Novo gasto":"Nova receita";document.getElementById("btn-gasto").className="tipo-btn"+(t==="gasto"?" ativo-gasto":"");document.getElementById("btn-receita").className="tipo-btn"+(t==="receita"?" ativo-receita":"");populateCatSelect(t)}
+function salvar(){
+  var desc=document.getElementById("f-desc").value.trim();
+  var rawV=document.getElementById("f-valor").value.replace(/\s/g,"").replace(",",".");
+  var valor=parseFloat(rawV),cat=document.getElementById("f-cat").value,data=document.getElementById("f-data").value;
+  if(!desc){alert("Informe a descrição.");return}
+  if(!rawV||isNaN(valor)||valor<=0){alert("Informe um valor válido.");return}
+  if(!data){alert("Informe a data.");return}
+  var lista=getLancamentos(),item={desc:desc,valor:valor,cat:cat,tipo:tipo,data:data};
+  if(editIdx>=0&&editIdx<lista.length)lista[editIdx]=item;else lista.push(item);
+  salvarStorage(lista);fecharModal();render();
+  if(document.getElementById("drawer").classList.contains("open"))renderDrawer();
+}
+function excluir(idx){if(!confirm("Remover este lançamento?"))return;var lista=getLancamentos();lista.splice(idx,1);salvarStorage(lista);render();if(document.getElementById("drawer").classList.contains("open"))renderDrawer()}
+
+function abrirModalCats(){editCatNome=null;document.getElementById("new-cat-emoji").value="";document.getElementById("new-cat-nome").value="";renderCatList();document.getElementById("modal-cats").style.display="flex"}
+function fecharModalCats(){document.getElementById("modal-cats").style.display="none";editCatNome=null;populateCatSelect(tipo);render()}
+function renderCatList(){
+  var cats=getCats(),nomes=Object.keys(cats),el=document.getElementById("cat-list");
+  if(!nomes.length){el.innerHTML='<p style="font-size:13px;color:var(--text2);padding:8px 0">Nenhuma categoria.</p>';return}
+  el.innerHTML=nomes.map(function(nome){var ns=nome.replace(/\\/g,"\\\\").replace(/'/g,"\\'");return'<div class="cat-item"><div class="cat-emoji">'+cats[nome]+'</div><div class="cat-name">'+nome+'</div><button type="button" class="cat-ebtn" onclick="iniciarEdicaoCat(\''+ns+'\')">✏️</button><button type="button" class="cat-dbtn" onclick="excluirCat(\''+ns+'\')">×</button></div>'}).join("");
+}
+function iniciarEdicaoCat(nome){var cats=getCats();editCatNome=nome;document.getElementById("new-cat-emoji").value=cats[nome]||"📦";document.getElementById("new-cat-nome").value=nome;document.getElementById("new-cat-nome").focus()}
+function adicionarCat(){
+  var emoji=document.getElementById("new-cat-emoji").value.trim()||"📦";
+  var nome=document.getElementById("new-cat-nome").value.trim();
+  if(!nome){alert("Informe o nome da categoria.");return}
+  var cats=getCats();
+  if(editCatNome&&editCatNome!==nome){delete cats[editCatNome];migrarCategoria(editCatNome,nome)}
+  cats[nome]=emoji;saveCats(cats);editCatNome=null;
+  document.getElementById("new-cat-emoji").value="";document.getElementById("new-cat-nome").value="";renderCatList();
+}
+function excluirCat(nome){if(!confirm('Remover "'+nome+'"? Lançamentos vão para "Outros".'))return;var cats=getCats();delete cats[nome];if(!cats["Outros"])cats["Outros"]="📦";saveCats(cats);migrarCategoria(nome,"Outros");renderCatList()}
+function migrarCategoria(de,para){for(var ano=anoAtual-5;ano<=anoAtual+1;ano++)for(var mes=0;mes<12;mes++){var key="fin_"+(currentUser?currentUser.email:"_")+"_"+ano+"_"+mes;try{var d=localStorage.getItem(key);if(!d)continue;var arr=JSON.parse(d),ch=false;arr.forEach(function(x){if(x.cat===de){x.cat=para;ch=true}});if(ch)localStorage.setItem(key,JSON.stringify(arr))}catch(e){}}}
+function exportar(){var data=getLancamentos();if(!data.length){alert("Nenhum dado para exportar.");return}try{var a=document.createElement("a"),blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});a.href=URL.createObjectURL(blob);a.download="financas_"+MESES[mesAtual]+"_"+anoAtual+".json";document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(a.href)},1000)}catch(e){alert("Não foi possível exportar neste dispositivo.")}}
+function limparMes(){if(!confirm("Apagar todos os lançamentos de "+MESES[mesAtual]+" "+anoAtual+"?"))return;localStorage.removeItem(getKey());render();if(document.getElementById("drawer").classList.contains("open"))renderDrawer()}
+
+(function(){try{var s=localStorage.getItem("fin_session");if(s){var u=JSON.parse(s);if(u&&u.email){currentUser=u;entrarApp()}}}catch(e){currentUser=null}})();
+</script>
+</body>
+</html>
